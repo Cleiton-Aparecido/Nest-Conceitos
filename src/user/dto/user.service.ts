@@ -35,7 +35,7 @@ export class UserService{
     async show(idusers: number){
         return this.prisma.user.findUnique({
             where: {
-                    idusers
+                idusers:idusers
             }
         })
     }
