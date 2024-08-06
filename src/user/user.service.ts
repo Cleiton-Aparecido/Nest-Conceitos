@@ -1,9 +1,10 @@
-import { Injectable, NotFoundException, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, UseInterceptors } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateUserDTO } from './dto/create-user.dto';
 import { UpdateUserDTO } from './dto/update-put-user.dto ';
 import { UpdatepatchUserDTO } from './dto/update-patch-user.dto  copy';
 import * as bcrypt from 'bcrypt';
+import { ExceptionsHandler } from '@nestjs/core/exceptions/exceptions-handler';
 
 
 @Injectable()
@@ -15,10 +16,10 @@ export class UserService {
 
     const salt = await bcrypt.genSalt()
 
-    data.password = await bcrypt.hash(data.password, salt)
+    data.password = await bcrypt.hash(data.password, salt);
 
     return this.prisma.user.create({
-      data
+      data,
     });
   }
 
@@ -34,11 +35,13 @@ export class UserService {
   }
 
   async update(idusers: number, data: UpdateUserDTO) {
+    await this.exists(idusers);
+
     if (!data.dataNascimento) {
       data.dataNascimento = null;
     }
-    
-    const salt = await bcrypt.genSalt()
+
+    const salt = await bcrypt.genSalt();
 
     data.password = await bcrypt.hash(data.password, salt)
 
@@ -57,11 +60,16 @@ export class UserService {
       },
     });
   }
-
   async updateParcial(idusers: number, data: UpdatepatchUserDTO) {
+
+    await this.exists(idusers);
+
     if (!data.dataNascimento) {
       data.dataNascimento = null;
     }
+    data.password = await bcrypt.hash(data.password, await bcrypt.genSalt())
+
+
     return this.prisma.user.update({
       data: {
         name: data.name,
@@ -77,6 +85,16 @@ export class UserService {
       },
     });
   }
+
+  async exists(idusers: number) {
+    const exits = await this.show(idusers)
+
+    if (exits == null) {
+      throw new BadRequestException(`User não existe!`);
+    }
+  }
+
+
   async delete(idusers: number) {
     if (!(await this.show(idusers))) {
       throw new NotFoundException(`O usuario ${idusers} já não existe`);

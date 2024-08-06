@@ -27,7 +27,7 @@ import { AuthGuard } from 'src/guards/auth.guard';
 @UseInterceptors(logInterceptor)
 @Controller('users')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(private readonly userService: UserService) { }
 
   @Post()
   async create(@Body() dados: CreateUserDTO) {
@@ -36,7 +36,13 @@ export class UserController {
 
   @Get()
   async list() {
+    console.log('list');
     return this.userService.list();
+  }
+  @Delete(':id')
+  async DeleteParcial(@Param('id', ParseIntPipe) id) {
+    console.log('DeleteParcial');
+    return this.userService.delete(id);
   }
 
   @Get(':id')
@@ -47,7 +53,7 @@ export class UserController {
   @Put(':id')
   async update(@Body() data: UpdateUserDTO, @Param('id', ParseIntPipe) id) {
     console.log(data)
-     return this.userService.update(id, data);
+    return this.userService.update(id, data);
   }
 
   @Patch(':id')
@@ -56,10 +62,5 @@ export class UserController {
     @Param('id', ParseIntPipe) id,
   ) {
     return this.userService.updateParcial(id, data);
-  }
-
-  @Delete(':id')
-  async DeleteParcial(@Param('id', ParseIntPipe) id) {
-    return this.userService.delete(id);
   }
 }
