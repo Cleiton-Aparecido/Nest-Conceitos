@@ -9,8 +9,9 @@ export class AppController {
   getHello(): string {
     return this.appService.getHello();
   }
+
   @Post()
-  SetHello(): string {
-    return 'Teste hello';
+  setHello(): string {
+    return 'POST: Hello Hcode!';
   }
 }

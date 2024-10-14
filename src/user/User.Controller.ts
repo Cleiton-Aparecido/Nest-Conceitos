@@ -1,47 +1,62 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, UseInterceptors } from '@nestjs/common';
-import { CreateUserDTO } from "./dto/create-user.dto";
-import { UpdatepatchUserDTO } from 'src/user/dto/update-patch-user.dto  copy';
-import { UpdateUserDTO } from 'src/user/dto/update-put-user.dto ';
-import { UserService } from './dto/user.service';
-import { logInterceptor } from 'src/interceptors/interceptor';
-import { Paramid } from 'src/decorators/param-id.decorator';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Put,
+  Patch,
+  Delete,
+  UseInterceptors,
+  UseGuards,
+} from '@nestjs/common';
+import { ParamId } from '../decorators/param-id.decorator';
+import { Roles } from '../decorators/roles.decorator';
+import { Role } from '../enums/role.enum';
+import { AuthGuard } from '../guards/auth.guard';
+import { RoleGuard } from '../guards/role.guard';
+import { LogInterceptor } from '../interceptors/log.interceptor';
+import { CreateUserDTO } from './dto/create-user.dto';
+import { UpdatePatchUserDTO } from './dto/update-patch-user.dto';
+import { UpdatePutUserDTO } from './dto/update-put-user.dto';
+import { UserService } from './user.service';
 
-
-
-@UseInterceptors(logInterceptor)
+@Roles(Role.Admin)
+@UseGuards(AuthGuard, RoleGuard)
+@UseInterceptors(LogInterceptor)
 @Controller('users')
 export class UserController {
-
-  constructor(private readonly userService: UserService){}
+  constructor(private readonly userService: UserService) {}
 
   @Post()
-  async create(@Body() dados: CreateUserDTO) {
-    return this.userService.create(dados);
+  async create(@Body() data: CreateUserDTO) {
+    return this.userService.create(data);
   }
 
   @Get()
-  async read() {
+  async list() {
     return this.userService.list();
   }
 
   @Get(':id')
-  async readOne(@Paramid() id: number  ) {
+  async show(@ParamId() id: number) {
+    console.log({ id });
     return this.userService.show(id);
   }
 
   @Put(':id')
-  async update(@Body() {email,name,password,dataNascimento}: UpdateUserDTO ,@Param('id',ParseIntPipe) id){
-            return this.userService.update(id,{email,name,password,dataNascimento})
-}
+  async update(@Body() data: UpdatePutUserDTO, @ParamId() id: number) {
+    return this.userService.update(id, data);
+  }
 
   @Patch(':id')
-  async updateParcial(@Body() data: UpdatepatchUserDTO ,@Param('id',ParseIntPipe) id){
-    return this.userService.updateParcial(id,data) ;
-  }
-  
-  @Delete(':id')
-  async DeleteParcial(@Param('id',ParseIntPipe) id){
-    return this.userService.delete(id);
+  async updatePartial(@Body() data: UpdatePatchUserDTO, @ParamId() id: number) {
+    return this.userService.updatePartial(id, data);
   }
 
+  @Delete(':id')
+  async delete(@ParamId() id: number) {
+    return {
+      success: await this.userService.delete(id),
+    };
+  }
 }

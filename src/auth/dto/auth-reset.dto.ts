@@ -1,17 +1,10 @@
-import { IsJWT, IsStrongPassword } from "class-validator";
+import { IsJWT, IsString, MinLength } from 'class-validator';
 
-export class AuthResetDTO{
-    @IsStrongPassword({
-        minLength:6,
-        minLowercase:0,
-        minNumbers:0,
-        minSymbols:0,
-        minUppercase:0
-    })
-    password:string;
+export class AuthResetDTO {
+  @IsString()
+  @MinLength(6)
+  password: string;
 
-    @IsJWT()
-    token: string
-
-
+  @IsJWT()
+  token: string;
 }
