@@ -2,21 +2,24 @@ import {
   BadRequestException,
   Injectable,
   UnauthorizedException,
-} from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { User } from '@prisma/client';
-import { AuthRegisterDTO } from './dto/auth-register.dto';
-import { UserService } from 'src/user/user.service';
-import * as bcrypt from 'bcrypt';
+} from "@nestjs/common";
+import { JwtService } from "@nestjs/jwt";
+import { User } from "@prisma/client";
+import { AuthRegisterDTO } from "./dto/auth-register.dto";
+import { UserService } from "src/user/user.service";
+import * as bcrypt from "bcrypt";
+import { Repository } from "typeorm";
+import { UserEntity } from "src/user/entity/user.entity";
+import { InjectRepository } from "@nestjs/typeorm";
 
 @Injectable()
 export class AuthService {
   constructor(
+    @InjectRepository(UserEntity)
+    private userRepository: Repository<UserEntity>,
     private readonly jwtService: JwtService,
-    private readonly prisma: PrismaService,
     private readonly userService: UserService,
-  ) { }
+  ) {}
 
   async createToken(user: User) {
     return {
@@ -29,8 +32,8 @@ export class AuthService {
         {
           // expiresIn:"10 second",
           subject: String(user.idusers),
-          issuer: 'login',
-          audience: 'users',
+          issuer: "login",
+          audience: "users",
         },
       ),
     };
@@ -38,7 +41,7 @@ export class AuthService {
   checkToken(token: string) {
     try {
       const data = this.jwtService.verify(token, {
-        audience: 'users',
+        audience: "users",
       });
 
       return data;
@@ -47,35 +50,32 @@ export class AuthService {
     }
   }
   async login(email: string, password: string) {
-    const user = await this.prisma.user.findFirst({
+    const user = await this.userRepository.findOne({
       where: {
         email,
       },
     });
 
-
-    
+    console.log(user);
     if (!user) {
-      throw new UnauthorizedException('E-mail e/ou senha incorretos.');
+      throw new UnauthorizedException("E-mail e/ou senha incorretos.");
     }
-    if (!await bcrypt.compare(password, user.password)) {
-      throw new UnauthorizedException('senha incorretos.');
+    if (!(await bcrypt.compare(password, user.password))) {
+      throw new UnauthorizedException("senha incorretos.");
     }
-
     return this.createToken(user);
-
   }
 
   async forget(email: string) {
-    const user = this.prisma.user.findFirst({
-      where: {
-        email,
-      },
-    });
+    // const user = this.prisma.user.findFirst({
+    //   where: {
+    //     email,
+    //   },
+    // });
 
-    if (!user) {
-      throw new UnauthorizedException('E-mail incorretos.');
-    }
+    // if (!user) {
+    //   throw new UnauthorizedException("E-mail incorretos.");
+    // }
     //enviar o e-mail
     return true;
   }
@@ -84,16 +84,16 @@ export class AuthService {
 
     const id = 0;
 
-    const user = await this.prisma.user.update({
-      where: {
-        idusers: id,
-      },
-      data: {
-        password,
-      },
-    });
+    // const user = await this.prisma.user.update({
+    //   where: {
+    //     idusers: id,
+    //   },
+    //   data: {
+    //     password,
+    //   },
+    // });
 
-    return this.createToken(user);
+    // return this.createToken(user);
   }
   async register(data: AuthRegisterDTO) {
     const user = await this.userService.create(data);
